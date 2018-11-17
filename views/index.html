@@ -1,0 +1,68 @@
+<html lang="en">
+  <head>
+    <title>mtharmen Exercise Tracker Microservice</title>
+  </head>
+  <body>
+    <h1>
+      API Basejump: Exercise Tracker Microservice
+    </h1>
+    <blockquote>
+      <h3>User stories:</h3>
+      <ol>
+        <li>I can create a user by posting form data username to <code>/api/exercise/new-user</code> and returned will be an object with <code>username</code> and <code>_id</code>.</li>
+        <li>I can get an array of all users by getting <code>api/exercise/users</code> with the same info as when creating a user.</li>
+        <li>I can add an exercise to any user by posting form data <code>userId(_id)</code>, <code>description</code>, <code>duration</code>, and optionally <code>date</code> to <code>/api/exercise/add</code>. If no date supplied it will use current date. Returned will the the user object with also with the exercise fields added.</li>
+        <li>I can retrieve a full exercise log of any user by getting <code>/api/exercise/log</code> with a parameter of <code>userId(_id)</code>. Return will be the user object with added array <code>log</code> and <code>count</code> (total exercise count).</li>
+        <li>I can retrieve part of the log of any user by also passing along optional parameters of <code>from</code> & <code>to</code> or <code>limit</code>. (Date format YYYY-MM-DD, limit = int)</li>
+
+      </ol>
+      <h3>Example usage:</h3>
+      <code>FIX ME</code><br>
+      <h3>Example output:</h3>
+      <code>
+        FIX ME
+      </code>
+      <h3>Usage:</h3>
+      <a href="https://tiny-butter.glitch.me/api/shorturl/4645" target="_blank">FIX ME</a>
+      <code>
+        FIX ME
+      </code>
+    </blockquote>
+      
+      <h3>Try it Out:</h3>
+      <p>* = required</p>
+      <div>
+        <code>POST /api/exercise/new-user</code>
+        <form action="api/exercise/new-user" method="POST">
+          <input id="username" type="text" name="username" placeholder="username*">
+          <input type="submit" value="Submit">
+        </form>
+      </div>
+
+      <div>
+        <code>POST /api/exercise/add</code>
+        <form action="api/exercise/add" method="POST">
+          <input id="userId" type="text" name="userId" placeholder="userId*">
+          <input id="description" type="text" name="description" placeholder="description*">
+          <input id="duration" type="text" name="duration" placeholder="duration (in minutes)*">
+          <input id="date" type="text" name="date" placeholder="YYYY-MM-DD">
+          <input type="submit" value="Submit">
+        </form>
+      </div>
+
+      <div>
+        <code>GET /api/exercise/log</code>
+        <form action="api/exercise/log" method="POST">
+          <input id="userId" type="text" name="userId" placeholder="userId*">
+          <input id="from" type="text" name="from" placeholder="from">
+          <input id="to" type="text" name="to" placeholder="to">
+          <input id="limit" type="text" name="limit" placeholder="limit">
+          <input type="submit" value="Submit">
+        </form>
+        <p>Note: <code>from</code> required <code>to</code> and vice versa</p>
+      </div>
+
+    <br />
+    <a href="https://github.com/mtharmen/exercise-tracker" target="_blank">Github Source</a>
+  </body>
+</html>
