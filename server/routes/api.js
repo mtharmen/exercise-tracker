@@ -11,17 +11,19 @@ function makeError(message, name, code) {
 }
 
 router.post('/exercise/new-user', (req, res, next) => {
-  console.log(req.query)
-  console.log(req.body)
   var username = req.body.username
-  User.find({ username })
+  User.findOne({ username })
     .then(user => {
-      if (!user) {
+      if (user) {
         let error = makeError('Username already taken', 'duplicate', 409)
         throw error
       } else {
-        res.json(user)
+        let newUser = User({ username })
+        return newUser.save()
       }
+    })
+    .then(user => {
+      res.json({ username: user.username, _id: user._id })
     })
     .catch(err => {
       next(err)
@@ -29,24 +31,30 @@ router.post('/exercise/new-user', (req, res, next) => {
 })
 
 router.get('/exercise/users', (req, res, next) => {
-  User.find((err, users) => {
+  User.find().select('_id username').exec((err, users) => {
     if (err) { next(err) }
     res.json(users)
   })
 })
 
-function validate(date, next) {
-  if (date.toString() === 'Invalid Date') {
-    let error = makeError('Malformed Date', 'invalid date', 400)
-    next(error)
-  }
-  return date
+function validate(date) {
+  return date.toString() !== 'Invalid Date' ? date : false
 }
 
 router.post('/exercise/add', (req, res, next) => {
+  var userId = req.body.userId
   var duration = validate(new Date(req.body.duration * 60 * 1000), next)
-  var date = req.body.date || new Date()
+  if (!duration) {
+    let error = makeError('Malformed Date', 'integers only', 400)
+    return next(error)
+  }
+  var date = req.body.date ? new Date(req.body.date) : new Date()
   date = validate(date, next)
+  if (!date) {
+    let error = makeError('Malformed Date', 'invalid date', 400)
+    return next(error)
+  }
+  date.setTime(date.getTime() + date.getTimezoneOffset() * 60 * 1000)
    
   var newLog = new Log({
     userId: req.body.userId,
@@ -55,7 +63,7 @@ router.post('/exercise/add', (req, res, next) => {
     date: date
   })
 
-  Log.findById(userId)
+  User.findById(userId)
     .then(user => {
       if (!user) {
         let error = makeError('userId not found', 'no userId', 404)
@@ -66,9 +74,13 @@ router.post('/exercise/add', (req, res, next) => {
       }
     })
     .then(saved => {
-      log.date = log.date.toDateString()
-      log.duration = log.duration.getMinutes()
-      res.json(log)
+      res.json({
+        userId: saved.userId,
+        username: saved.username,
+        description: saved.description,
+        duration: saved.duration.getMinutes(),
+        date: saved.date.toDateString()
+      })
     })
     .catch(err => {
       next(err)
@@ -76,47 +88,52 @@ router.post('/exercise/add', (req, res, next) => {
 })
 
 router.get('/exercise/log', (req, res, next) => {
-  if (!req.body.userId) {
+  var userId = req.query.userId
+  if (!userId) {
     let error = makeError('userId required', 'need userId', 400)
-    next(error)
+    return next(error)
   }
   
-  var query = { _id: req.body.userId }
-  var from = req.body.from
-  var to = req.body.to
-  var limit = parseInt(req.body.limit) || 0
+  var query = { userId }
+  var limit = parseInt(req.query.limit) || 0
 
+  // Default to unix time 0 and current time for from and to respectively
+  var from = req.query.from || 0
+  var to = req.query.to || new Date().getTime()
+  
   // Checking if from and to are valid
-  if (from || to) {
-    if (from && to) {
-      from = validate(new Date(from), next)
-      to = validate(new Date(to), next)
-      query.date = { '$gte': from, '$lt': to }
-    } else {
-      let error = makeError('Need both from and to fields', 'missing pair', 400)
-      next(error)
-    }
+  from = validate(new Date(from), next)
+  to = validate(new Date(to), next)
+
+  if (!from || !to) {
+    let error = makeError('Malformed Date', 'invalid date', 400)
+    return next(error)
   }
 
-  Log.find(query).limit(limit)
+  query.date = { '$gte': from, '$lt': to }
+
+  Log.find(query).select('description duration date').limit(limit)
     .then(logs => {
       req.logs = logs
-      return User.findById(req.body.userId)
+      return User.findById(userId)
     })
     .then(user => {
       if (!user) {
         let error = makeError('No User Found', 'no user', 404)
         throw error
       }
-      logs.forEach(log => {
-        log.duration = log.duration.getMinutes()
-        log.date = log.date.toDateString()
+      let logs = req.logs.map(log => {
+        return {
+          description: log.description,
+          duration: log.duration.getMinutes(),
+          date: log.date.toDateString()
+        }
       })
       res.json({
         userId: user._id,
         username: user.username,
-        count: req.logs.length,
-        logs: req.logs
+        count: logs.length,
+        logs: logs
       })
     })
     .catch(err => {

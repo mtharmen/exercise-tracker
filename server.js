@@ -7,7 +7,6 @@ var app = express()
 // Connecting to database
 mongoose.Promise = global.Promise
 
-// var mongodbUrl = 'mongodb://' + process.env.MONGOD_USER + ':' + process.env.MONGOD_PASSWORD + '@' + process.env.IP + ':' + process.env.PORT + '/mthar-url-shortener'
 var mongodbUrl = process.env.MONGODB_URI
 
 mongoose.connect(mongodbUrl, { useNewUrlParser: true })
